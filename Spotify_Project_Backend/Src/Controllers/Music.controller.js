@@ -3,24 +3,7 @@ const jwt = require('jsonwebtoken')
 const {uploadFile}  = require('../Services/Storage.services')
 const albumModel = require('../Models/Album.models')
 
-async function createMusic(req, res){
-
-    const token = req.cookies.token;
-
-    if(!token){
-        return res.status(401).json({
-            message: 'Unauthorized'
-        })
-    }
-    try{
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY)
-        if(decoded.role !=="artist"){
-            return res.status(401).json({
-                message: "you can not acces this page"
-            })
-        }
-
-    
+async function createMusic(req, res){    
     const {title} = req.body;
     const file = req.file;
 
@@ -29,7 +12,7 @@ async function createMusic(req, res){
     const music = await musicModel.create({
         uri: result.url,
         title,
-        artist: decoded.id
+        artist: req.user.id,
     })
     res.status(201).json({
         message: 'Music created successfully',
@@ -41,37 +24,17 @@ async function createMusic(req, res){
         }
         
     })
-}catch(err){
-    console.log(err);
-    
-        return res.status(401).json({
-            message: 'Unauthorized'
-        })
-    }
-
 } 
 
 
 async function createAlbum(req, res){
-    const token = req.cookies.token;
-    if(!token){
-        return res.status(401).json({
-            message: 'Unauthorized'
-        })
-    }
-    try{
-        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY)
-        if(decoded.role !== "artist"){
-            return res.status(401).json({
-                message: "you do not have acces this page"
-            })
-        }
+    
        const {title, musics } = req.body;
 
         const album = await albumModel.create({
             title,
             musics:musics,
-            artist: decoded.id,
+            artist: req.user.id,
         })
         res.status(201).json({
             message: 'Album created successfully',
@@ -82,13 +45,6 @@ async function createAlbum(req, res){
                 artist: album.artist
             }
         })
-    }
-    catch(err){
-        console.log(err);
-        res.status(401).json({
-            message: 'Unauthorized'
-        })
-    }
 }
 
 
